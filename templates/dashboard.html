@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - Khalid Encryption Pro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-theme">
+    <div class="dashboard-container">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-lock"></i>
+                <h2>Khalid Pro</h2>
+            </div>
+
+            <ul class="nav-menu">
+                <li><a href="#" class="nav-item active" onclick="showSection('encrypt')"><i class="fas fa-lock"></i> التشفير</a></li>
+                <li><a href="#" class="nav-item" onclick="showSection('decrypt')"><i class="fas fa-unlock"></i> فك التشفير</a></li>
+                <li><a href="#" class="nav-item" onclick="showSection('logs')"><i class="fas fa-history"></i> السجلات</a></li>
+                <li><a href="#" class="nav-item" onclick="showSection('settings')"><i class="fas fa-cog"></i> الإعدادات</a></li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="user-info">
+                    <img id="userAvatar" src="https://ui-avatars.com/api/?name=User" alt="صورة المستخدم" class="avatar">
+                    <div>
+                        <h3 id="userName">المستخدم</h3>
+                        <p id="userEmail">user@example.com</p>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <!-- قسم التشفير -->
+                <section id="encrypt" class="section active">
+                    <h2><i class="fas fa-lock"></i> تشفير الملفات</h2>
+                    <div class="encrypt-container">
+                        <div class="upload-zone" id="encryptDropZone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <h3>اسحب الملفات هنا أو انقر للاختيار</h3>
+                            <p>يمكنك تشفير أي نوع ملفات: صور، فيديوهات، مستندات، إلخ</p>
+                            <input type="file" id="encryptFile" style="display: none;" onchange="handleEncryptFileSelect(this.files)">
+                        </div>
+
+                        <div id="encryptFileSelected" style="display: none;" class="file-selected">
+                            <h4>الملف المختار:</h4>
+                            <p id="encryptFileName"></p>
+                            <p id="encryptFileSize"></p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="encryptPassword">كلمة المرور:</label>
+                            <input type="password" id="encryptPassword" placeholder="أدخل كلمة مرور قوية" required>
+                            <small>استخدم كلمة مرور قوية من 6 أحرف على الأقل</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="encryptPasswordConfirm">تأكيد كلمة المرور:</label>
+                            <input type="password" id="encryptPasswordConfirm" placeholder="أعد كتابة كلمة المرور" required>
+                        </div>
+
+                        <button class="btn-primary" onclick="startEncryption()">
+                            <i class="fas fa-shield-alt"></i> بدء التشفير
+                        </button>
+
+                        <div id="encryptProgress" style="display: none;" class="progress-container">
+                            <div class="progress-bar">
+                                <div id="encryptProgressFill" class="progress-fill"></div>
+                            </div>
+                            <p id="encryptStatus">جاري التشفير...</p>
+                            <p id="encryptTime">الوقت المتبقي: --</p>
+                        </div>
+
+                        <div id="encryptResult" style="display: none;" class="result-box success">
+                            <i class="fas fa-check-circle"></i>
+                            <h4>تم التشفير بنجاح!</h4>
+                            <p id="encryptResultMessage"></p>
+                            <a id="downloadEncrypted" href="#" class="btn-primary" download>
+                                <i class="fas fa-download"></i> تحميل الملف المشفر
+                            </a>
+                        </div>
+
+                        <div id="encryptError" style="display: none;" class="result-box error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <h4>حدث خطأ!</h4>
+                            <p id="encryptErrorMessage"></p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- قسم فك التشفير -->
+                <section id="decrypt" class="section" style="display: none;">
+                    <h2><i class="fas fa-unlock"></i> فك تشفير الملفات</h2>
+                    <div class="decrypt-container">
+                        <div class="upload-zone" id="decryptDropZone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <h3>اسحب ملفات .khalid هنا أو انقر للاختيار</h3>
+                            <p>حدد الملفات المشفرة التي تريد فك تشفيرها</p>
+                            <input type="file" id="decryptFile" style="display: none;" onchange="handleDecryptFileSelect(this.files)" accept=".khalid">
+                        </div>
+
+                        <div id="decryptFileSelected" style="display: none;" class="file-selected">
+                            <h4>الملف المختار:</h4>
+                            <p id="decryptFileName"></p>
+                            <p id="decryptFileSize"></p>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="decryptPassword">كلمة المرور:</label>
+                            <input type="password" id="decryptPassword" placeholder="أدخل كلمة المرور الأصلية" required>
+                        </div>
+
+                        <button class="btn-primary" onclick="startDecryption()">
+                            <i class="fas fa-key"></i> بدء فك التشفير
+                        </button>
+
+                        <div id="decryptProgress" style="display: none;" class="progress-container">
+                            <div class="progress-bar">
+                                <div id="decryptProgressFill" class="progress-fill"></div>
+                            </div>
+                            <p id="decryptStatus">جاري فك التشفير...</p>
+                            <p id="decryptTime">الوقت المتبقي: --</p>
+                        </div>
+
+                        <div id="decryptResult" style="display: none;" class="result-box success">
+                            <i class="fas fa-check-circle"></i>
+                            <h4>تم فك التشفير بنجاح!</h4>
+                            <p id="decryptResultMessage"></p>
+                            <a id="downloadDecrypted" href="#" class="btn-primary" download>
+                                <i class="fas fa-download"></i> تحميل الملف الأصلي
+                            </a>
+                        </div>
+
+                        <div id="decryptError" style="display: none;" class="result-box error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <h4>حدث خطأ!</h4>
+                            <p id="decryptErrorMessage"></p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- قسم السجلات -->
+                <section id="logs" class="section" style="display: none;">
+                    <h2><i class="fas fa-history"></i> سجل العمليات</h2>
+                    <div class="logs-container">
+                        <div class="logs-filters">
+                            <button class="filter-btn active" onclick="filterLogs('all')">الكل</button>
+                            <button class="filter-btn" onclick="filterLogs('encrypt')">التشفير</button>
+                            <button class="filter-btn" onclick="filterLogs('decrypt')">فك التشفير</button>
+                        </div>
+
+                        <table id="logsTable" class="logs-table">
+                            <thead>
+                                <tr>
+                                    <th>اسم الملف</th>
+                                    <th>النوع</th>
+                                    <th>حجم الملف</th>
+                                    <th>الوقت (ثانية)</th>
+                                    <th>الحالة</th>
+                                    <th>التاريخ والوقت</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsBody">
+                                <tr><td colspan="6" class="text-center">جاري تحميل السجلات...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- قسم الإعدادات -->
+                <section id="settings" class="section" style="display: none;">
+                    <h2><i class="fas fa-cog"></i> الإعدادات</h2>
+                    <div class="settings-container">
+                        <div class="settings-group">
+                            <h3>معلومات الحساب</h3>
+                            <div class="form-group">
+                                <label>البريد الإلكتروني:</label>
+                                <input type="email" id="settingsEmail" placeholder="your@email.com">
+                            </div>
+                            <button class="btn-primary" onclick="updateProfile()"><i class="fas fa-save"></i> حفظ التغييرات</button>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3>تغيير كلمة المرور</h3>
+                            <div class="form-group">
+                                <label>كلمة المرور الحالية:</label>
+                                <input type="password" id="oldPassword" placeholder="أدخل كلمة المرور الحالية">
+                            </div>
+                            <div class="form-group">
+                                <label>كلمة المرور الجديدة:</label>
+                                <input type="password" id="newPassword" placeholder="أدخل كلمة المرور الجديدة">
+                            </div>
+                            <div class="form-group">
+                                <label>تأكيد كلمة المرور الجديدة:</label>
+                                <input type="password" id="confirmPassword" placeholder="أعد كتابة كلمة المرور">
+                            </div>
+                            <button class="btn-primary" onclick="changePassword()"><i class="fas fa-lock"></i> تغيير كلمة المرور</button>
+                        </div>
+
+                        <div class="settings-group">
+                            <h3>تفضيلات المظهر</h3>
+                            <div class="form-group">
+                                <label>الموضوع:</label>
+                                <select id="themeSelect" onchange="changeTheme(this.value)">
+                                    <option value="dark">مظهر مظلم</option>
+                                    <option value="light">مظهر فاتح</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div id="notification" class="notification" style="display: none;"></div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
